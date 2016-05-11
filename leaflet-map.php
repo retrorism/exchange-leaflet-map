@@ -3,8 +3,8 @@
     Author: bozdoz
     Author URI: http://twitter.com/bozdoz/
     Plugin URI: http://wordpress.org/plugins/leaflet-map/
-    Plugin Name: Leaflet Map
-    Description: A plugin for creating a Leaflet JS map with a shortcode.
+    Plugin Name: Exchange Leaflet Map
+    Description: A plugin for creating a Leaflet JS map with a shortcode. Forked from the original Leaflet Map by Benjamin J DeLong
     Version: 1.15
     License: GPL2
     */
