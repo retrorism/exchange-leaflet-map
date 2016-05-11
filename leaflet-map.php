@@ -9,9 +9,9 @@
     License: GPL2
     */
 
-if (!class_exists('Leaflet_Map_Plugin')) {
-    
-    class Leaflet_Map_Plugin {
+if (!class_exists('Exchange_Leaflet_Map')) {
+
+    class Exchange_Leaflet_Map {
 
         public static $geocoders = array(
             'google' => 'Google Maps',
@@ -61,8 +61,9 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             );
 
         public function __construct() {
-            add_action('admin_init', array(&$this, 'admin_init'));
-            add_action('admin_menu', array(&$this, 'admin_menu'));
+			/* move this to exchange-plugin */
+            // add_action('admin_init', array(&$this, 'admin_init'));
+            // add_action('admin_menu', array(&$this, 'admin_menu'));
             add_action( 'wp_enqueue_scripts', array(&$this, 'enqueue_and_register') );
             add_action( 'admin_enqueue_scripts', array(&$this, 'enqueue_and_register') );
 
@@ -84,9 +85,9 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 }
             }
         }
-        
+
         public static function uninstall () {
-            
+
             /* remove geocoded locations */
             $locations = get_option('leaflet_geocoded_locations', array());
 
@@ -117,7 +118,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             wp_register_style('leaflet_stylesheet', $css_url, Array(), $version, false);
             wp_register_script('leaflet_js', $js_url, Array(), $version, true);
-            
+
             /* run an init function because other wordpress plugins don't play well with their window.onload functions */
             wp_register_script('leaflet_map_init', plugins_url('scripts/init-leaflet-map.js', __FILE__), Array('leaflet_js'), '1.0', true);
 
@@ -125,15 +126,21 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             wp_enqueue_script('leaflet_map_construct', plugins_url('scripts/construct-leaflet-map.js', __FILE__), Array(), '1.0', false);
 
         }
-        
+
         public function admin_init () {
             wp_register_style('leaflet_admin_stylesheet', plugins_url('style.css', __FILE__));
         }
 
         public function admin_menu () {
-            add_menu_page("Leaflet Map", "Leaflet Map", 'manage_options', "leaflet-map", array(&$this, "settings_page"), plugins_url('images/leaf.png', __FILE__));
-            add_submenu_page("leaflet-map", "Default Values", "Default Values", 'manage_options', "leaflet-map", array(&$this, "settings_page"));
-            add_submenu_page("leaflet-map", "Shortcodes", "Shortcodes", 'manage_options', "leaflet-get-shortcode", array(&$this, "shortcode_page"));
+			/* Nest the Leaflet Map options under the Exchange Plugin menu if available */
+			if ( defined( 'EXCHANGE_PLUGIN' ) ) {
+            	add_submenu_page(EXCHANGE_PLUGIN, "Leaflet Defaults", "Leaflet Defaults", 'manage_options', "leaflet-map", array(&$this, "settings_page"));
+            	add_submenu_page(EXCHANGE_PLUGIN, "Leaflet Shortcodes", "Leaflet Shortcodes", 'manage_options', "leaflet-get-shortcode", array(&$this, "shortcode_page"));
+			} else {
+				add_menu_page("Leaflet Map", "Leaflet Map", 'manage_options', "leaflet-map", array(&$this, "settings_page"), plugins_url('images/leaf.png', __FILE__));
+            	add_submenu_page("leaflet-map", "Leaflet Defaults", "Leaflet Defaults", 'manage_options', "leaflet-map", array(&$this, "settings_page"));
+            	add_submenu_page("leaflet-map", "Leaflet Shortcodes", "Leaflet Shortcodes", 'manage_options', "leaflet-get-shortcode", array(&$this, "shortcode_page"));
+        	}
         }
 
         public function settings_page () {
@@ -181,7 +188,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
         public function google_geocode ( $address ) {
             /* Google */
-            
+
             $geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
             $geocode_url .= $address;
             $json = file_get_contents($geocode_url);
@@ -189,7 +196,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             /* found location */
             if ($json->{'status'} == 'OK') {
-                
+
                 $location = $json->{'results'}[0]->{'geometry'}->{'location'};
 
                 return $location;
@@ -249,7 +256,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
         public static $leaflet_map_count;
 
         public function map_shortcode ( $atts ) {
-            
+
             if (!$this::$leaflet_map_count) {
             	$this::$leaflet_map_count = 0;
             }
@@ -304,8 +311,8 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             /* allow percent, but add px for ints */
             $height .= is_numeric($height) ? 'px' : '';
-            $width .= is_numeric($width) ? 'px' : '';   
-            
+            $width .= is_numeric($width) ? 'px' : '';
+
             /* should be iterated for multiple maps */
             $content = '<div id="leaflet-wordpress-map-'.$leaflet_map_count.'" class="leaflet-wordpress-map" style="height:'.$height.'; width:'.$width.';"></div>';
 
@@ -313,17 +320,17 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             WPLeafletMapPlugin.add(function () {
                 var map,
                     baseURL = '{$tileurl}',
-                    base = L.tileLayer(baseURL, { 
+                    base = L.tileLayer(baseURL, {
                        subdomains: '{$subdomains}'
                     });
-                
-                map = L.map('leaflet-wordpress-map-{$leaflet_map_count}', 
+
+                map = L.map('leaflet-wordpress-map-{$leaflet_map_count}',
                     {
                         layers: [base],
                         zoomControl: {$zoomcontrol},
                         scrollWheelZoom: {$scrollwheel}
                     }).setView([{$lat}, {$lng}], {$zoom});";
-                
+
 
                 if ($show_attr) {
                     /* add attribution to MapQuest and OSM */
@@ -345,7 +352,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
         }
 
         public function image_shortcode ( $atts ) {
-            
+
             /* get map count for unique id */
             if (!$this::$leaflet_map_count) {
                 $this::$leaflet_map_count = 0;
@@ -380,11 +387,11 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             $zoomcontrol = empty($zoomcontrol) ? $default_zoom_control : $zoomcontrol;
             $zoom = empty($zoom) ? 1 : $zoom;
             $scrollwheel = empty($scrollwheel) ? $default_scrollwheel : $scrollwheel;
-            
+
             /* allow percent, but add px for ints */
             $height .= is_numeric($height) ? 'px' : '';
-            $width .= is_numeric($width) ? 'px' : '';   
-            
+            $width .= is_numeric($width) ? 'px' : '';
+
             $content = '<div id="leaflet-wordpress-image-'.$leaflet_map_count.'" class="leaflet-wordpress-map" style="height:'.$height.'; width:'.$width.';"></div>';
 
             $content .= "<script>
@@ -433,7 +440,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             }
 
             $leaflet_map_count = $this::$leaflet_map_count;
-            
+
             if (!empty($atts)) extract($atts);
 
             $draggable = empty($draggable) ? 'false' : $draggable;
@@ -464,7 +471,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 if (empty($lat) && empty($lng)) {
                     /* update lat lng to previous map's center */
                     $marker_script .= "
-                    if ( is_image && 
+                    if ( is_image &&
                         !previous_image.is_loaded) {
                         previous_image_onload = previous_image.onload;
                         previous_image.onload = function () {
@@ -493,7 +500,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             marker.addTo( previous_map );
             ";
-            
+
             $message = empty($message) ? (empty($content) ? '' : $content) : $message;
 
             if (!empty($message)) {
@@ -504,7 +511,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
                 if ($visible) {
 
-                    $marker_script .= ".openPopup()";                    
+                    $marker_script .= ".openPopup()";
 
                 }
 
@@ -527,9 +534,9 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 return '';
             }
             $leaflet_map_count = $this::$leaflet_map_count;
-            
+
             if (!empty($atts)) extract($atts);
-            
+
             $color = empty($color) ? "black" : $color;
             $fitline = empty($fitline) ? 0 : $fitline;
 
@@ -583,9 +590,9 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
     } /* end class */
 
-    register_activation_hook( __FILE__, array('Leaflet_Map_Plugin', 'activate'));
-    register_uninstall_hook( __FILE__, array('Leaflet_Map_Plugin', 'uninstall') );
+    register_activation_hook( __FILE__, array('Exchange_Leaflet_Map', 'activate'));
+    register_uninstall_hook( __FILE__, array('Exchange_Leaflet_Map', 'uninstall') );
 
-    $leaflet_map_plugin = new Leaflet_Map_Plugin();
+    $leaflet_map_plugin = new Exchange_Leaflet_Map();
 }
 ?>
