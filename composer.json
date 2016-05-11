@@ -1,0 +1,22 @@
+
+{
+    "name": "retrorism/exchange-leaflet-map",
+    "description": "Adding Leaflet support to the Exchange frontend, forked from Benjamin J DeLong's Leaflet Map plugin",
+    "authors":  [
+      {
+        "name": "Benjamin J DeLong",
+        "homepage": "https://github.com/bozdoz"
+      },
+      {
+        "name": "Willem Prins | SOMTIJDS",
+        "email": "willem@somtijds.nl",
+        "homepage": "http://www.somtijds.nl"
+      }
+    ],
+    "type": "wordpress-plugin",
+    "source": {
+        "url": "https://github.com/retrorism/exchange-leaflet-map.git",
+        "type": "git",
+        "reference": "master"
+    }
+}
