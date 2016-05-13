@@ -459,8 +459,17 @@ if (!class_exists('Exchange_Leaflet_Map')) {
             $marker_script = "<script>
             WPLeafletMapPlugin.add(function () {
                 var map_count = {$leaflet_map_count},
+					exchange_icon = L.icon({
+						iconUrl: 'http://leafletjs.com/docs/images/leaf-orange.png',
+						shadowUrl: 'http://leafletjs.com/docs/images/leaf-shadow.png',
+						iconSize:     [38, 95], // size of the icon
+						shadowSize:   [50, 64], // size of the shadow
+						iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+						shadowAnchor: [4, 62],  // the same for the shadow
+						popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+					}),
                     draggable = {$draggable},
-                    marker = L.marker([{$lat}, {$lng}], { draggable : draggable }),
+                    marker = L.marker([{$lat}, {$lng}], { draggable : draggable, icon : exchange_icon }),
                     previous_map = WPLeafletMapPlugin.maps[ map_count - 1 ],
                     is_image = previous_map.is_image_map,
                     image_len = WPLeafletMapPlugin.images.length,
@@ -539,6 +548,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 
             $color = empty($color) ? "black" : $color;
             $fitline = empty($fitline) ? 0 : $fitline;
+			$visible = empty($visible) ? false : ($visible == 'true');
 
             $locations = Array();
 
@@ -571,10 +581,36 @@ if (!class_exists('Exchange_Leaflet_Map')) {
             $marker_script = "<script>
             WPLeafletMapPlugin.add(function () {
                 var previous_map = WPLeafletMapPlugin.maps[ {$leaflet_map_count} - 1 ],
-                    line = L.polyline($location_json, { color : '$color'}),
+                    line = L.polyline($location_json, {
+						color : '$color',
+						weight : 3,
+						opacity : 0.9,
+					 	dashArray : '5, 2'
+					}),
                     fitline = $fitline;
                 line.addTo( previous_map );
+				";
 
+				$message = empty($message) ? (empty($content) ? '' : $content) : $message;
+
+				if (!empty($message)) {
+
+				$message = str_replace("\n", '', $message);
+
+					$marker_script .= "line.bindPopup('$message')";
+
+					if ($visible) {
+
+						$marker_script .= ".openPopup()";
+
+					}
+
+					$marker_script .= ";
+					";
+
+				}
+
+				$marker_script .= "
                 if (fitline) {
                     // zoom the map to the polyline
                     previous_map.fitBounds( line.getBounds() );
