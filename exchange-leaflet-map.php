@@ -13,8 +13,6 @@
  * Version: 1.15
  * License: GPL2
  */
- */
-
 
 if (!class_exists('Exchange_Leaflet_Map')) {
 
