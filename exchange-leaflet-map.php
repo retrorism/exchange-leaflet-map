@@ -1,13 +1,20 @@
 <?php
-    /*
-    Author: bozdoz
-    Author URI: http://twitter.com/bozdoz/
-    Plugin URI: http://wordpress.org/plugins/leaflet-map/
-    Plugin Name: Exchange Leaflet Map
-    Description: A plugin for creating a Leaflet JS map with a shortcode. Forked from the original Leaflet Map by Benjamin J DeLong
-    Version: 1.15
-    License: GPL2
-    */
+/**
+ * Exchange Leaflet Map
+ *
+ * Adds an option to add maps as patterns in the Exchange Theme
+ *
+ * @wordpress-plugin
+ * Author: bozdoz
+ * Author URI: http://twitter.com/bozdoz/
+ * Plugin URI: http://wordpress.org/plugins/leaflet-map/
+ * Plugin Name: Exchange Leaflet Map
+ * Description: A plugin for creating a Leaflet JS map. Forked from the original Leaflet Map by Benjamin J DeLong
+ * Version: 1.15
+ * License: GPL2
+ */
+ */
+
 
 if (!class_exists('Exchange_Leaflet_Map')) {
 
