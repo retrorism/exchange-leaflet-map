@@ -26,16 +26,20 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 
         public static $defaults = array (
             'text' => array(
-                'leaflet_map_tile_url' => '//otile{s}-s.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg',
+                //'leaflet_map_tile_url' => '//otile{s}-s.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg',
+				'leaflet_map_tile_url' => 'https://api.mapbox.com/styles/v1/retrorism/cio2pv2ft001ybvm8qb4da6f9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoicmV0cm9yaXNtIiwiYSI6IlhRWTE0d2cifQ.-Wi_jReZU4Wz_owPnVZDwQ',
                 'leaflet_map_tile_url_subdomains' => '1234',
-                'leaflet_js_url' => '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js',
-                'leaflet_css_url' => '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css',
-                'leaflet_default_zoom' => '16',
+                //'leaflet_js_url' => '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js',
+				'leaflet_js_url' => '//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.1/leaflet.js',
+				//'leaflet_css_url' => '//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css',
+				'leaflet_css_url' => '//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-rc.1/leaflet.css',
+                'leaflet_default_zoom' => '0',
                 'leaflet_default_height' => '250',
                 'leaflet_default_width' => '100%',
                 ),
             'textarea' => array(
-                'leaflet_default_attribution' => 'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png" />; © <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+				//'leaflet_default_attribution' => 'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png" />; © <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+				'leaflet_default_attribution' => 'Tiles Courtesy of <a href="http://www.mapbox.com/" target="_blank">MapBox</a> © <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors'
                 ),
             'select' => array(
                 'leaflet_geocoder' => 'google',
@@ -123,6 +127,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 
             wp_register_style('leaflet_stylesheet', $css_url, Array(), $version, false);
             wp_register_script('leaflet_js', $js_url, Array(), $version, true);
+			wp_register_script('leaflet_snake_js', plugins_url('scripts/L.Polyline.SnakeAnim.js', __FILE__), Array('leaflet_js'), '1.0', true);
 
             /* run an init function because other wordpress plugins don't play well with their window.onload functions */
             wp_register_script('leaflet_map_init', plugins_url('scripts/init-leaflet-map.js', __FILE__), Array('leaflet_js'), '1.0', true);
@@ -285,6 +290,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
             /* leaflet script */
             wp_enqueue_style('leaflet_stylesheet');
             wp_enqueue_script('leaflet_js');
+			wp_enqueue_script('leaflet_snake_js');
             wp_enqueue_script('leaflet_map_init');
 
             if ($atts) {
@@ -377,6 +383,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
             /* leaflet script */
             wp_enqueue_style('leaflet_stylesheet');
             wp_enqueue_script('leaflet_js');
+			wp_enqueue_script('leaflet_snake_js');
             wp_enqueue_script('leaflet_map_init');
 
             if ($atts) {
@@ -460,18 +467,20 @@ if (!class_exists('Exchange_Leaflet_Map')) {
         	/* add to user contributed lat lng */
             $lat = empty($lat) ? ( empty($y) ? '0' : $y ) : $lat;
             $lng = empty($lng) ? ( empty($x) ? '0' : $x ) : $lng;
+			$marker_url = plugins_url('images/checkbox.png', __FILE__);
+			// iconUrl: 'http://leafletjs.com/docs/images/leaf-orange.png',
+			// shadowUrl: 'http://leafletjs.com/docs/images/leaf-shadow.png',
 
             $marker_script = "<script>
             WPLeafletMapPlugin.add(function () {
                 var map_count = {$leaflet_map_count},
 					exchange_icon = L.icon({
-						iconUrl: 'http://leafletjs.com/docs/images/leaf-orange.png',
-						shadowUrl: 'http://leafletjs.com/docs/images/leaf-shadow.png',
-						iconSize:     [38, 95], // size of the icon
-						shadowSize:   [50, 64], // size of the shadow
-						iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+						iconUrl: '{$marker_url}',
+						iconSize:     [30, 30], // size of the icon
+						shadowSize:   [0, 0], // size of the shadow
+						iconAnchor:   [15, 15], // point of the icon which will correspond to marker's location
 						shadowAnchor: [4, 62],  // the same for the shadow
-						popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+						popupAnchor:  [-5, -15] // point from which the popup should open relative to the iconAnchor
 					}),
                     draggable = {$draggable},
                     marker = L.marker([{$lat}, {$lng}], { draggable : draggable, icon : exchange_icon }),
@@ -556,6 +565,8 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 			$visible = empty($visible) ? false : ($visible == 'true');
 
             $locations = Array();
+			$markers = Array();
+			$lines = Array();
 
             if (!empty($addresses)) {
                 $addresses = preg_split('/\s?[;|\/]\s?/', $addresses);
@@ -580,20 +591,66 @@ if (!class_exists('Exchange_Leaflet_Map')) {
                     }
                 }
             }
-
+			;
+			$length = count( $locations );
+			for ( $i = 0; $i < $length; $i++ ) {
+				$markers[] = $locations[$i];
+				if ( $i === $length - 1 ) {
+					if ( $length > 2 ) {
+						$lines[] = array( $locations[$i], $locations[0] );
+					}
+				} else {
+					$lines[] = array( $locations[$i], $locations[$i+1] );
+				}
+			}
+			if ( $length == 2 ) {
+				$markers[] = $locations[1];
+			}
+			// <?php /* // https://github.com/jseppi/Leaflet.MakiMarkers
             $location_json = json_encode($locations);
-
+			$lines_json = json_encode($lines);
+			$markers_json = json_encode($markers);
+			$marker_url = plugins_url('images/checkbox.png', __FILE__);
             $marker_script = "<script>
+			createRoute = function(arr_m,arr_l) {
+				var exchange_icon = L.icon({
+					iconUrl: '{$marker_url}',
+					iconSize:     [30, 30], // size of the icon
+					shadowSize:   [0, 0], // size of the shadow
+					iconAnchor:   [15, 15], // point of the icon which will correspond to marker's location
+					shadowAnchor: [4, 62],  // the same for the shadow
+					popupAnchor:  [-5, -15] // point from which the popup should open relative to the iconAnchor
+				}),
+				route = L.featureGroup({snakingPause: 500 });
+				if ( arr_m.length > 0 && arr_l.length > 0 ) {
+					for ( i = 0; i < arr_l.length; i++ ) {
+						var marker = L.marker( arr_m[i], {
+							icon : exchange_icon
+						} );
+						var line = L.polyline( arr_l[i], {
+							color : '$color',
+							weight : 6,
+							opacity : 0.9,
+							dashArray : '12, 10',
+							lineJoin: 'round',
+							snakingSpeed: 200
+						} );
+						route.addLayer( marker ).addLayer( line );
+					}
+					if ( arr_l.length == 1 ) {
+						route.addLayer( L.marker( arr_m[i], {
+							icon : exchange_icon
+						} ) );
+					}
+				}
+				return route;
+			};
             WPLeafletMapPlugin.add(function () {
                 var previous_map = WPLeafletMapPlugin.maps[ {$leaflet_map_count} - 1 ],
-                    line = L.polyline($location_json, {
-						color : '$color',
-						weight : 3,
-						opacity : 0.9,
-					 	dashArray : '5, 2'
-					}),
-                    fitline = $fitline;
-                line.addTo( previous_map );
+                    fitline = $fitline,
+					route = createRoute($markers_json,$lines_json);
+				route.addTo( previous_map );
+
 				";
 
 				$message = empty($message) ? (empty($content) ? '' : $content) : $message;
@@ -602,7 +659,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 
 				$message = str_replace("\n", '', $message);
 
-					$marker_script .= "line.bindPopup('$message')";
+					$marker_script .= "route.bindPopup('$message')";
 
 					if ($visible) {
 
@@ -618,10 +675,11 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 				$marker_script .= "
                 if (fitline) {
                     // zoom the map to the polyline
-                    previous_map.fitBounds( line.getBounds() );
+                    previous_map.fitBounds( route.getBounds() );
                 }
+				route.snakeIn();
 
-                WPLeafletMapPlugin.lines.push( line );
+                WPLeafletMapPlugin.lines.push( route );
 
             });
             </script>";
