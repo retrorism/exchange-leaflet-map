@@ -568,7 +568,14 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 			$markers = Array();
 			$lines = Array();
 
-            if (!empty($addresses)) {
+			if (!empty($latlngs) ) {
+                $latlngs = preg_split('/\s?[;|\/]\s?/', $latlngs);
+                foreach ($latlngs as $latlng) {
+                    if (trim($latlng)) {
+                        $locations[] = array_map('floatval', preg_split('/\s?,\s?/', $latlng));
+                    }
+                }
+            } elseif (!empty($addresses)) {
                 $addresses = preg_split('/\s?[;|\/]\s?/', $addresses);
                 foreach ($addresses as $address) {
                     if (trim($address)) {
@@ -576,22 +583,14 @@ if (!class_exists('Exchange_Leaflet_Map')) {
                         $locations[] = Array($geocoded->{'lat'}, $geocoded->{'lng'});
                     }
                 }
-            } else if (!empty($latlngs)) {
-                $latlngs = preg_split('/\s?[;|\/]\s?/', $latlngs);
-                foreach ($latlngs as $latlng) {
-                    if (trim($latlng)) {
-                        $locations[] = array_map('floatval', preg_split('/\s?,\s?/', $latlng));
-                    }
-                }
-            } else if (!empty($coordinates)) {
+            } elseif (!empty($coordinates)) {
                 $coordinates = preg_split('/\s?[;|\/]\s?/', $coordinates);
                 foreach ($coordinates as $xy) {
                     if (trim($xy)) {
                         $locations[] = array_map('floatval', preg_split('/\s?,\s?/', $xy));
                     }
                 }
-            }
-			;
+            };
 			$length = count( $locations );
 			for ( $i = 0; $i < $length; $i++ ) {
 				$markers[] = $locations[$i];
