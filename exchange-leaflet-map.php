@@ -293,6 +293,13 @@ if (!class_exists('Exchange_Leaflet_Map')) {
 			wp_enqueue_script('leaflet_snake_js');
             wp_enqueue_script('leaflet_map_init');
 
+			$translation_array = array(
+				'yellowTandem' => '#' . $GLOBALS['EXCHANGE_PLUGIN_CONFIG']['COLOURS']['yellow-tandem'],
+				'markerUrl' => plugins_url('images/T_dot_WEB.png', __FILE__),
+			);
+			//after wp_enqueue_script
+			wp_localize_script( 'leaflet_map_init', 'leaflet_vars', $translation_array );
+
             if ($atts) {
                 extract($atts);
             }
@@ -383,7 +390,6 @@ if (!class_exists('Exchange_Leaflet_Map')) {
             /* leaflet script */
             wp_enqueue_style('leaflet_stylesheet');
             wp_enqueue_script('leaflet_js');
-			wp_enqueue_script('leaflet_snake_js');
             wp_enqueue_script('leaflet_map_init');
 
             if ($atts) {
@@ -467,7 +473,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
         	/* add to user contributed lat lng */
             $lat = empty($lat) ? ( empty($y) ? '0' : $y ) : $lat;
             $lng = empty($lng) ? ( empty($x) ? '0' : $x ) : $lng;
-			$marker_url = plugins_url('images/checkbox.png', __FILE__);
+			$marker_url = plugins_url('images/T_dot_WEB.png', __FILE__);
 			// iconUrl: 'http://leafletjs.com/docs/images/leaf-orange.png',
 			// shadowUrl: 'http://leafletjs.com/docs/images/leaf-shadow.png',
 
@@ -557,9 +563,7 @@ if (!class_exists('Exchange_Leaflet_Map')) {
                 return '';
             }
             $leaflet_map_count = $this::$leaflet_map_count;
-
             if (!empty($atts)) extract($atts);
-
             $color = empty($color) ? "black" : $color;
             $fitline = empty($fitline) ? 0 : $fitline;
 			$visible = empty($visible) ? false : ($visible == 'true');
@@ -591,7 +595,11 @@ if (!class_exists('Exchange_Leaflet_Map')) {
                     }
                 }
             };
+			if ( ! empty( $cities ) ) {
+				$city_labels = preg_split('/\s?[;|\/]\s?/', $cities );
+			}
 			$length = count( $locations );
+			// Adding markers and lines to their respective arrays.
 			for ( $i = 0; $i < $length; $i++ ) {
 				$markers[] = $locations[$i];
 				if ( $i === $length - 1 ) {
@@ -609,72 +617,40 @@ if (!class_exists('Exchange_Leaflet_Map')) {
             $location_json = json_encode($locations);
 			$lines_json = json_encode($lines);
 			$markers_json = json_encode($markers);
-			$marker_url = plugins_url('images/T_dot_WEB.png', __FILE__);
+			$cities_json = json_encode($city_labels);
             $marker_script = "<script>
-			createRoute = function(arr_m,arr_l) {
-				var exchange_icon = L.icon({
-					iconUrl: '{$marker_url}',
-					iconSize:     [20, 20], // size of the icon
-					shadowSize:   [0, 0], // size of the shadow
-					iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
-					shadowAnchor: [4, 62],  // the same for the shadow
-					popupAnchor:  [-5, -15] // point from which the popup should open relative to the iconAnchor
-				}),
-				route = L.featureGroup({snakingPause: 500 });
-				if ( arr_m.length > 0 && arr_l.length > 0 ) {
-					for ( i = 0; i < arr_l.length; i++ ) {
-						var marker = L.marker( arr_m[i], {
-							icon : exchange_icon
-						} );
-						var line = L.polyline( arr_l[i], {
-							color : '$color',
-							weight : 6,
-							opacity : 0.9,
-							dashArray : '12, 10',
-							lineJoin: 'round',
-							snakingSpeed: 200
-						} );
-						route.addLayer( marker ).addLayer( line );
-					}
-					if ( arr_l.length == 1 ) {
-						route.addLayer( L.marker( arr_m[i], {
-							icon : exchange_icon
-						} ) );
-					}
-				}
-				return route;
-			};
             WPLeafletMapPlugin.add(function () {
                 var previous_map = WPLeafletMapPlugin.maps[ {$leaflet_map_count} - 1 ],
                     fitline = $fitline,
-					route = createRoute($markers_json,$lines_json);
-				route.addTo( previous_map );
+					route = createRoute($markers_json,$lines_json,$cities_json);
+					";
 
-				";
+					$message = empty($message) ? (empty($content) ? '' : $content) : $message;
 
-				$message = empty($message) ? (empty($content) ? '' : $content) : $message;
+					if (!empty($message)) {
 
-				if (!empty($message)) {
+					$message = str_replace("\n", '', $message);
 
-				$message = str_replace("\n", '', $message);
+						$marker_script .= "route.bindPopup('$message')";
 
-					$marker_script .= "route.bindPopup('$message')";
+						if ($visible) {
 
-					if ($visible) {
+							$marker_script .= ".openPopup()";
 
-						$marker_script .= ".openPopup()";
+						}
+
+						$marker_script .= ";
+						";
 
 					}
 
-					$marker_script .= ";
-					";
+					$marker_script .= "
+				route.addTo( previous_map );
 
-				}
 
-				$marker_script .= "
                 if (fitline) {
                     // zoom the map to the polyline
-                    previous_map.fitBounds( route.getBounds() );
+                    previous_map.fitBounds( route.getBounds().pad(0.033) );
                 }
 				route.snakeIn();
 
