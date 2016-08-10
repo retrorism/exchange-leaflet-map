@@ -4,11 +4,11 @@ Author URI: http://www.twitter.com/bozdoz/
 Plugin URI: http://wordpress.org/plugins/leaflet-map/
 Contributors: bozdoz, Remigr, nielsalstrup, jeromelebleu
 Donate link: https://www.gittip.com/bozdoz/
-Tags: leaflet, map, javascript, mapquest
+Tags: leaflet, map, javascript, openstreetmap, mapquest, interactive
 Requires at least: 3.0.1
-Tested up to: 4.4.2
-Version: 1.15
-Stable tag: 1.15
+Tested up to: 4.5.4
+Version: 2.0.1
+Stable tag: 2.0.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,11 +16,11 @@ A flexible plugin that adds basic shortcodes for creating multiple Leaflet maps 
 
 == Description ==
 
-Add a map generated with <a href="http://www.leafletjs.com/" target="_blank">leaflet JS</a>: a mobile friendly map application.  Map tiles are provided by default through <a href="http://developer.mapquest.com/web/products/open/map" target="_blank">MapQuest</a>.  Can be set per map with shortcode attributes or through the dashboard settings.
+Add a map generated with <a href="http://www.leafletjs.com/" target="_blank">leaflet JS</a>: a mobile friendly map application.  Map tiles are provided by default through OpenStreetMap and MapQuest (with an app key).  Can be set per map with shortcode attributes or through the dashboard settings.
 
 Some shortcode attributes:
 
-Height, width, latitude, longitude and zoom are the basic attributes: 
+Height, width, latitude, longitude and zoom are the basic attributes:
 
 `[leaflet-map height=250 width=250 lat=44.67 lng=-63.61 zoom=5]`
 
@@ -28,17 +28,19 @@ However, you can also just give it an address, and Google will look it up for yo
 
 `[leaflet-map address="Oslo, Norway"]`
 
-The default URL requires attribution by its terms of use.  If you want to change the URL, you may remove the attribution.  Also, you can set this per map in the shortcode (1 for enabled and 0 for disabled): 
+The default URL requires attribution by its terms of use.  If you want to change the URL, you may remove the attribution.  Also, you can set this per map in the shortcode (1 for enabled and 0 for disabled):
 
 `[leaflet-map show_attr="1"]`
 
-The zoom buttons can be large and annoying.  Enabled or disable per map in shortcode: 
+The zoom buttons can be large and annoying.  Enabled or disable per map in shortcode:
 
 `[leaflet-map zoomcontrol="0"]`
 
 Add a marker to any map by adding `[leaflet-marker]` after any `[leaflet-map]` shortcode.  You can adjust the lat/lng in the same way, as well as some other basic functionality (popup message, draggable, visible on load).  Also, if you want to add a link to a marker popup, use `[leaflet-marker]Message here: click here[/leaflet-marker]` and add a link like you normally would with the WordPress editor.
 
 Add a line to the map by adding `[leaflet-line]`. You can specify the postions with a list separated by semi-colon `;` or bar `|` using lat/lng: `[leaflet-line latlngs="41, 29; 44, 18"]` or addresses: `[leaflet-line addresses="Istanbul; Sarajevo"]`, or x/y coordinates for image maps.
+
+Or you can add a geojson shape via a url (work in progress): `[leaflet-geojson src="https://example.com/path/to.geojson"]`
 
 Alternatively, you could use a plain image for visitors to zoom and pan around with `[leaflet-image source="path/to/image/file.jpg"]`.  See screenshots 3 - 5 for help setting that up.
 
@@ -53,17 +55,25 @@ Check out the source code on [GitHub](https://github.com/bozdoz/wp-plugin-leafle
 
 == Frequently Asked Questions ==
 
+* My map now says direct tile access has been discontinued (July 11, 2016); can you fix it?
+
+Yes. Update to the newest plugin version, and reset defaults in settings.  You can choose to use MapQuest by signing up and supplying an app key, or use the default OpenStreetMap tiles (with attribution).  See Screenshot 8.
+
+* Can I add geojson?
+
+Yes, just give it a source URL: `[leaflet-geojson src="https://example.com/path/to.geojson"]`
+
 * Can I add a message to a marker?
 
 Yes: `[leaflet-marker message="Hello there!" visible="true"]`, where visible designates if it is visible on page load. Otherwise it is only visible when clicked.
 
 * Can I use your plugin with a picture instead of a map?
 
-Yes: Use `[leaflet-image source="path/to/image/file.jpg"]`.  See screenshots 3 - 5 for help setting that up. 
+Yes: Use `[leaflet-image source="path/to/image/file.jpg"]`.  See screenshots 3 - 5 for help setting that up.
 
 * Can I use my own self-hosted Leaflet files?
 
-Yes: It's been added to the dashboard options! 
+Yes: It's been added to the dashboard options!
 
 * How can I add a link to a marker?
 
@@ -87,9 +97,19 @@ Shoot me a question [@bozdoz](http://www.twitter.com/bozdoz/).
 4. For `[leaflet-image]` paste that image URL into an attribute titled `source`: example: `source="http://lorempixel.com/1000/1000/"`.
 5. See the `[leaflet-image]` on the front end.
 6. If you use `[leaflet-marker draggable=true]`, then you can drag the marker where you want it, open a developers console, and see the specific shortcode to use.
-7. You can specify the URL of your leaflet files, if you don't want to use the CDN url.
+7. Add geojson via URL: `[leaflet-geojson src="https://example.com/path/to.geojson"]`
+8. MapQuest requires an app key, get it from their website; alternatively, you can use OpenStreetMap as a free tile service (remember to add an attribution where necessary).
 
 == Changelog ==
+
+= 2.0.1 =
+* Changed ajax request to be compatible with some versions of IE.
+
+= 2.0 =
+* Needed to add support for a MapQuest app key, since they discontinued the direct access of their tiles on July 11, 2016; added an alternate OpenStreetMap tile URL as the new default. Remember to reset options to default values!
+
+= 1.16 =
+* Added bare geojson support
 
 = 1.15 =
 * Removed shortcode brackets from leaflet-marker shortcode
@@ -140,6 +160,15 @@ Shoot me a question [@bozdoz](http://www.twitter.com/bozdoz/).
 * First Version. Basic map creation and marker creation.
 
 == Upgrade Notice ==
+
+= 2.0.1 =
+GeoJSON ajax requests now work with Internet Explorer (some versions)
+
+= 2.0 =
+MapQuest tiles will no longer work without an app key!
+
+= 1.16 =
+Added bare geojson support
 
 = 1.15 =
 Fixed incompatibility with plugins that execute recursive shortcodes

@@ -1,23 +1,19 @@
 (function () {
-	var previous_onload = window.onload;
 
-	window.onload = function () {
+	WPLeafletMapPlugin.add( initAdminShortcodes );
 
-	    if ( previous_onload ) {
-	        previous_onload();
-	    }
-
+	function initAdminShortcodes () {
 		var map_input = document.getElementById('map-shortcode'),
 			marker_input = document.getElementById('marker-shortcode'),
 			map_1 = WPLeafletMapPlugin.maps[0],
 			marker_1 = WPLeafletMapPlugin.markers[0];
-		
+
 		function update_marker () {
 			var latlng = marker_1.getLatLng();
 			marker_input.value = '[leaflet-marker lat=' +
 				latlng.lat +
-				' lng=' + 
-				latlng.lng + 
+				' lng=' +
+				latlng.lng +
 				']';
 		}
 
@@ -25,8 +21,8 @@
 			var latlng = map_1.getCenter();
 			map_input.value = '[leaflet-map lat=' +
 				latlng.lat +
-				' lng=' + 
-				latlng.lng + 
+				' lng=' +
+				latlng.lng +
 				' zoom=' +
 				map_1.getZoom() +
 				']';
